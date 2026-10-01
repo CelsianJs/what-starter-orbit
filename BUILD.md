@@ -22,6 +22,7 @@ Planned public source: `https://github.com/CelsianJs/what-starter-orbit`
 | API validation | `src/api/availability.js` | The serverless function validates the posted client context; it does not trust local reservation data blindly. |
 | Router | `src/routes.js` | Programmatic routes keep the booking flow small and direct-addressable. |
 | Vura package | `scripts/build-vura.mjs` | The build writes static aliases, bundles `/api/availability`, and emits a manifest for Vura. |
+| Vura config | `vura.json` | Header catch-alls use Vura's `(.*)` route matcher and avoid unsupported top-level rewrites. |
 | Browser QA | `scripts/smoke.mjs` | The smoke flow books a reservation, checks the ledger, verifies the ICS control, and confirms a real 404. |
 
 ## Actual implementation notes
@@ -33,6 +34,8 @@ Effects and storage: `src/state/booking.js` sanitizes restored reservations, sto
 Timezone handling: bundled slots include `-04:00` offsets and all display helpers format with `America/New_York`. The UI always renders `Eastern Time` next to slot choices so copied code does not silently show ambiguous local browser time.
 
 Serverless boundary: the client posts `serviceId`, `start`, and local reservations to `/api/availability`. The API revalidates the service, checks the start against published slots, validates local reservation service IDs strictly, and runs overlap math against both bundled demo holds and active local reservations.
+
+Deployment package boundary: `vura.json` keeps to the platform's known shape. The `/api/(.*)` header uses Vura's route matcher syntax; shell-style `*` globs are rejected. The build writes concrete route aliases plus `404.html`, so no top-level rewrite rule is needed. `scripts/build-vura.mjs` also writes `dist/functions/package.json` with `{ "type": "module" }` and validates required manifest fields (`filePath`, `config`, route flags, `timestamp`, and the non-empty serverless API mapping) before upload.
 
 ICS export: the first implementation used a `data:text/calendar` href. What Framework correctly stripped that unsafe URL. The fix is a button that creates a temporary Blob URL at click time, triggers a download, and revokes the URL.
 
@@ -52,12 +55,13 @@ Regression tests added:
 - Deterministic slots: October 2026 slots keep browser screenshots and API tests stable.
 - ICS safety: unsafe `data:` href was stripped by the framework; Blob URL button fixed it.
 - Strict API lookup: UI fallback caused a phantom-conflict possibility; API now uses strict lookup.
+- Vura config upload: the first real-host upload failed before provisioning because `vura.json` used a shell-style `*` header glob and an unsupported top-level `rewrites` key. The fix changed the catch-all to `(.*)`, removed the rewrite, and added build-time manifest/package checks so config-shape drift fails locally.
 - npm peer resolution: npm 10.9.9 can trip an arborist `edgesOut` error around Vitest optional browser peers. The local `.npmrc` sets `legacy-peer-deps=true`, and `npm ci` verifies the lockfile.
 
 ## Test proof
 
 - `npm ci && npm test` passed after the strict lookup repair: 8 Vitest checks for open slots, demo holds, local conflicts, unknown service rejection, valid conflicts, ICS generation, overlap boundaries, malformed JSON, and oversized streamed bodies.
-- `npm run build` passed: Vite bundle plus 6 Vura pages and `/api/availability`.
+- `npm run build` passed: Vite bundle plus 6 Vura pages, `/api/availability`, required manifest fields, and `dist/functions/package.json`.
 - `npm run smoke` passed: fresh root render, service cards, booking entrypoint, all primary nav links with browser back, visible service/slot controls before booking, `/api/availability`, reservation ledger, ICS button, real 404, desktop and mobile full-page screenshots.
 - Screenshots: `/tmp/orbit-desktop.png`, `/tmp/orbit-mobile.png`.
 
