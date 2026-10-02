@@ -8,21 +8,30 @@ export default function Book() {
       <div class="page-head">
         <p class="eyebrow">Booking desk</p>
         <h1>Pick a session, then verify the slot.</h1>
-        <p>Orbit posts the selected service, start time, and local reservations to `/api/availability` before allowing a booking.</p>
+        <p>Orbit checks the selected session, start time, and local holds before it lets you write a browser-only booking.</p>
       </div>
       <div class="booking-layout">
         <div class="booking-board">
-          <ServicePicker />
-          <label><span>Your name</span><input value={guestName()} onInput={(event) => guestName(event.target.value)} /></label>
-          <div class="date-tabs" role="tablist" aria-label="Date">
-            {demoDates.map((date) => <button class={selectedDate() === date ? 'active' : ''} onClick={() => { selectedDate(date); selectedStart(slotsForDate()[0] || selectedStart()); }}>{displayDate(date)}</button>)}
+          <div class="field-group">
+            <p class="group-label">Service</p>
+            <ServicePicker />
           </div>
-          <div class="slot-grid" aria-label={`Available slots in ${timezoneLabel}`}>
-            {slotsForDate().map((slot) => (
-              <button class={selectedStart() === slot ? 'active' : ''} onClick={() => selectedStart(slot)}>
-                {displayTime(slot)} <span>{timezoneLabel}</span>
-              </button>
-            ))}
+          <label><span>Your name</span><input value={guestName()} onInput={(event) => guestName(event.target.value)} /></label>
+          <div class="field-group">
+            <p class="group-label">Date</p>
+            <div class="date-tabs" role="tablist" aria-label="Date">
+              {demoDates.map((date) => <button class={selectedDate() === date ? 'active' : ''} onClick={() => { selectedDate(date); selectedStart(slotsForDate()[0] || selectedStart()); }}>{displayDate(date)}</button>)}
+            </div>
+          </div>
+          <div class="field-group">
+            <p class="group-label">Time</p>
+            <div class="slot-grid" aria-label={`Available slots in ${timezoneLabel}`}>
+              {slotsForDate().map((slot) => (
+                <button class={selectedStart() === slot ? 'active' : ''} onClick={() => selectedStart(slot)}>
+                  {displayTime(slot)} <span>{timezoneLabel}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         <aside class="booking-summary" aria-live="polite">

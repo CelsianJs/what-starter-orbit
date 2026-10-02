@@ -35,6 +35,8 @@ Timezone handling: bundled slots include `-04:00` offsets and all display helper
 
 Serverless boundary: the client posts `serviceId`, `start`, and local reservations to `/api/availability`. The API revalidates the service, checks the start against published slots, validates local reservation service IDs strictly, and runs overlap math against both bundled demo holds and active local reservations.
 
+Design review repair: product-facing copy no longer prints the raw API path. The booking page says Orbit checks “the selected session, start time, and local holds,” while `/build` keeps `/api/availability` for implementers. The booking header uses a one-column page-head grid, the action row starts at the left, the form now has visible Service/Date/Time group labels, mobile keeps the local reservation chip near the wordmark, and the empty home orbit panel shows the next open slot instead of a giant `0`.
+
 Deployment package boundary: `vura.json` keeps to the platform's known shape. The `/api/(.*)` header uses Vura's route matcher syntax; shell-style `*` globs are rejected. The build writes concrete route aliases plus `404.html`, so no top-level rewrite rule is needed. `scripts/build-vura.mjs` also writes `dist/functions/package.json` with `{ "type": "module" }` and validates required manifest fields (`filePath`, `config`, route flags, `timestamp`, and the non-empty serverless API mapping) before upload.
 
 ICS export: the first implementation used a `data:text/calendar` href. What Framework correctly stripped that unsafe URL. The fix is a button that creates a temporary Blob URL at click time, triggers a download, and revokes the URL.

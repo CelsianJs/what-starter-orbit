@@ -2,7 +2,7 @@
 
 ## Source of truth
 - Status: Active
-- Last refreshed: 2026-10-01
+- Last refreshed: 2026-10-02
 - Primary product surfaces: Studio landing page, service menu, booking flow, private local reservations, build guide, serverless availability API.
 - Evidence reviewed: `what-starter-gather`, `what-starter-tempo`, `what-starter-cartograph`, What router/core package docs.
 
@@ -68,14 +68,14 @@
 ## Content voice
 - Tone: Studio concierge, concise and reassuring.
 - Terminology: Session, slot, studio time, local reservation.
-- Microcopy rules: State local/demo boundaries where a real booking product would otherwise imply shared inventory.
+- Microcopy rules: State local/demo boundaries where a real booking product would otherwise imply shared inventory. Keep raw endpoint names in `/build`, not in the studio or booking product copy.
 
 ## Implementation constraints
 - Framework/styling system: What Framework 0.13.10, Vite 6.4.3, Vura CLI 0.3.0.
 - Design-token constraints: No external fonts or assets.
 - Performance constraints: Small bundle, bounded API body reader, generated aliases.
 - Compatibility constraints: Node 22 and npm ci.
-- Test/screenshot expectations: Vitest API/domain tests plus Playwright browser smoke desktop/mobile.
+- Test/screenshot expectations: Vitest API/domain tests plus Playwright browser smoke desktop/mobile. Booking controls must show visible Service, Date, and Time labels; mobile keeps the local-count chip beside the wordmark; empty home state shows the next open slot instead of a giant zero.
 
 ## Open questions
 - [ ] Which durable calendar backend should production docs recommend first / owner: platform team / impact: future integration guide.

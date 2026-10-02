@@ -1,5 +1,5 @@
 import { computed, effect, signal } from 'what-framework';
-import { baseSlots, createIcs, displayDate, findService, services, slotDate, timezoneLabel } from '../data/studio.js';
+import { baseSlots, displayDate, findService, services, slotDate, timezoneLabel } from '../data/studio.js';
 
 export const STORAGE_KEY = 'what-starter-orbit-v1';
 
@@ -87,10 +87,6 @@ export function rescheduleReservation(id, start) {
 export function resetReservations() {
   reservations([]);
   status('Local reservations cleared.');
-}
-
-export function icsHref(reservation) {
-  return `data:text/calendar;charset=utf-8,${encodeURIComponent(createIcs(reservation))}`;
 }
 
 effect(() => {

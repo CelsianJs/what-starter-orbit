@@ -24,9 +24,19 @@ async function assertHome(page) {
   await page.getByRole('heading', { name: 'Release Map Intensive' }).waitFor();
   await page.getByRole('link', { name: 'Find a slot' }).waitFor();
   await page.getByRole('link', { name: 'Compare services' }).waitFor();
+  const orbitPanel = page.locator('.orbital-panel');
+  const panelText = await orbitPanel.innerText();
+  if (!/next open demo slot|active local reservations/i.test(panelText)) {
+    throw new Error(`Expected orbit panel to show next slot or active reservation state, got: ${panelText}`);
+  }
+  if (await page.getByText(/api\/availability/).count()) throw new Error('Product-facing home copy should not expose /api/availability.');
 }
 async function assertBookingControls(page) {
   await page.getByRole('heading', { name: /Pick a session/i }).waitFor();
+  await page.locator('.group-label', { hasText: /^Service$/ }).waitFor();
+  await page.locator('.group-label', { hasText: /^Date$/ }).waitFor();
+  await page.locator('.group-label', { hasText: /^Time$/ }).waitFor();
+  if (await page.getByText(/api\/availability/).count()) throw new Error('Booking product copy should not expose /api/availability.');
   await page.getByRole('radio', { name: /Soundprint Session/i }).waitFor();
   await page.getByRole('radio', { name: /Motion Room Review/i }).waitFor();
   await page.getByRole('button', { name: /Tue, Oct 6/i }).waitFor();
