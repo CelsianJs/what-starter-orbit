@@ -1,4 +1,4 @@
-import { chromium, devices } from 'playwright';
+import { chromium } from 'playwright';
 import { collectChildLogs, spawnNodePreview, starterRoot, stopOwnedProcess, waitForOwnedReadiness } from './smoke-harness.mjs';
 
 const port = 4182;
@@ -36,6 +36,18 @@ async function assertBookingControls(page) {
   await page.locator('.group-label', { hasText: /^Service$/ }).waitFor();
   await page.locator('.group-label', { hasText: /^Date$/ }).waitFor();
   await page.locator('.group-label', { hasText: /^Time$/ }).waitFor();
+  const geometry = await page.evaluate(() => {
+    const board = document.querySelector('.booking-board')?.getBoundingClientRect();
+    const service = [...document.querySelectorAll('.group-label')].find((node) => node.textContent?.trim() === 'Service')?.getBoundingClientRect();
+    const date = [...document.querySelectorAll('.group-label')].find((node) => node.textContent?.trim() === 'Date')?.getBoundingClientRect();
+    const time = [...document.querySelectorAll('.group-label')].find((node) => node.textContent?.trim() === 'Time')?.getBoundingClientRect();
+    return { height: window.innerHeight, boardTop: board?.top, serviceTop: service?.top, dateTop: date?.top, timeTop: time?.top };
+  });
+  for (const [label, top] of [['booking board', geometry.boardTop], ['Service label', geometry.serviceTop], ['Date label', geometry.dateTop], ['Time label', geometry.timeTop]]) {
+    if (!Number.isFinite(top) || top < 0 || top > geometry.height) {
+      throw new Error(`${label} should start in the first viewport: ${JSON.stringify(geometry)}`);
+    }
+  }
   if (await page.getByText(/api\/availability/).count()) throw new Error('Booking product copy should not expose /api/availability.');
   await page.getByRole('radio', { name: /Soundprint Session/i }).waitFor();
   await page.getByRole('radio', { name: /Motion Room Review/i }).waitFor();
@@ -101,8 +113,8 @@ try {
     label: 'Orbit preview',
   });
   var browser = await chromium.launch();
-  await runFlow('desktop', { viewport: { width: 1360, height: 920 } });
-  await runFlow('mobile', { ...devices['iPhone 15'] });
+  await runFlow('desktop', { viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
+  await runFlow('mobile', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true });
   const page = await browser.newPage();
   const notFound = await page.goto(`http://127.0.0.1:${port}/missing-orbit`);
   if (notFound.status() !== 404) throw new Error(`Expected 404, got ${notFound.status()}`);
