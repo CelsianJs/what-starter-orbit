@@ -4,7 +4,7 @@ import { activeReservations } from '../state/booking.js';
 import { ServiceCard } from '../components/ServiceCard.jsx';
 
 export default function Home() {
-  const count = activeReservations().length;
+  const count = () => activeReservations().length;
   const nextSlot = baseSlots[0];
   return (
     <section class="page-enter">
@@ -17,8 +17,8 @@ export default function Home() {
         </div>
         <aside class="orbital-panel">
           <span></span><span></span><span></span>
-          <strong>{count || displayTime(nextSlot)}</strong>
-          <p>{count ? 'active local reservations' : `${displayDate(slotDate(nextSlot))} is the next open demo slot`}</p>
+          <strong>{() => count() || displayTime(nextSlot)}</strong>
+          <p>{() => count() ? 'active local reservations' : `${displayDate(slotDate(nextSlot))} is the next open demo slot`}</p>
           <small>Times shown in {timezoneLabel}</small>
         </aside>
       </div>

@@ -18,6 +18,7 @@ async function waitForVisualRest(page) {
   });
 }
 async function assertHome(page) {
+  await assertNoOverflow(page);
   await page.getByRole('heading', { name: /Book the right orbit/i }).waitFor();
   await page.getByRole('heading', { name: 'Soundprint Session' }).waitFor();
   await page.getByRole('heading', { name: 'Motion Room Review' }).waitFor();
@@ -66,12 +67,19 @@ async function assertNavAndBack(page) {
   for (const [label, heading] of checks) {
     await nav.getByRole('link', { name: label, exact: true }).click();
     await page.getByRole('heading', { name: heading }).waitFor();
+    await assertNoOverflow(page);
     if (label === 'Book') await assertBookingControls(page);
     await waitForVisualRest(page);
     await page.goBack();
     await assertHome(page);
     await waitForVisualRest(page);
   }
+}
+
+async function assertNoOverflow(page) {
+  const viewportWidth = page.viewportSize().width;
+  const widths = await page.evaluate(() => [document.documentElement.scrollWidth, document.body.scrollWidth]);
+  if (widths.some((width) => width > viewportWidth)) throw new Error(`Horizontal overflow on ${page.url()}: ${widths} / ${viewportWidth}`);
 }
 async function runFlow(name, options) {
   const context = await browser.newContext(options);
@@ -80,7 +88,12 @@ async function runFlow(name, options) {
     if (['error', 'warning'].includes(msg.type()) && !msg.text().includes('404')) errors.push(`${name}: ${msg.type()}: ${msg.text()}`);
   });
   page.on('pageerror', (err) => errors.push(`${name}: ${err.message}`));
-  await page.addInitScript(() => localStorage.removeItem('what-starter-orbit-v1'));
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem('orbit-smoke-started')) {
+      localStorage.removeItem('what-starter-orbit-v1');
+      sessionStorage.setItem('orbit-smoke-started', 'yes');
+    }
+  });
   await page.goto(`http://127.0.0.1:${port}/`);
   await page.waitForLoadState('networkidle');
   await assertHome(page);
@@ -98,9 +111,42 @@ async function runFlow(name, options) {
   await assertBookingControls(page);
   await page.getByRole('button', { name: /Check availability/i }).click();
   await page.getByText(/Studio hold ORB-/).waitFor();
+  await page.getByRole('button', { name: /Thu, Oct 8/i }).click();
+  if (!(await page.getByRole('button', { name: /Book locally/i }).isDisabled())) throw new Error('Changing date must invalidate the verified hold.');
+  let releaseHold;
+  await page.route('**/api/availability', async (route) => {
+    await new Promise((resolve) => { releaseHold = resolve; });
+    await route.fulfill({ json: { ok: true, holdId: 'stale-hold', service: { id: 'soundprint' }, start: '2026-10-08T14:30:00-04:00' } });
+  });
+  await page.getByRole('button', { name: /Check availability/i }).click();
+  await page.waitForFunction(() => document.querySelector('.booking-summary button')?.disabled);
+  await page.getByRole('button', { name: /Tue, Oct 6/i }).click();
+  releaseHold();
+  await page.getByText('Draft changed during the check. Check this selection again.').waitFor();
+  if (!(await page.getByRole('button', { name: /Book locally/i }).isDisabled())) throw new Error('Stale response must not enable booking.');
+  await page.unroute('**/api/availability');
+  await page.getByRole('button', { name: /Check availability/i }).click();
+  await page.getByText(/Studio hold ORB-/).waitFor();
   await page.getByRole('button', { name: /Book locally/i }).click();
   await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Reservations', exact: true }).click();
   await page.getByRole('button', { name: 'ICS' }).waitFor();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'ICS' }).click();
+  const download = await downloadPromise;
+  if (!download.suggestedFilename().endsWith('.ics')) throw new Error('Expected ICS download.');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByText('Cancelled locally. Book a new session to choose another time.').waitFor();
+  await page.reload();
+  await page.getByText('Cancelled locally. Book a new session to choose another time.').waitFor();
+  await page.getByRole('button', { name: 'Reset all' }).click();
+  await page.getByRole('heading', { name: 'No active local reservations.' }).waitFor();
+  await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Services', exact: true }).click();
+  await page.locator('.service-card').filter({ has: page.getByRole('heading', { name: 'Motion Room Review' }) }).getByRole('button', { name: 'Choose session' }).click();
+  await page.getByRole('heading', { name: /Pick a session/i }).waitFor();
+  if (await page.getByRole('radio', { name: /Motion Room Review/ }).getAttribute('aria-checked') !== 'true') throw new Error('Service choice must carry into booking.');
+  await page.getByRole('radio', { name: /Motion Room Review/ }).focus();
+  await page.keyboard.press('ArrowLeft');
+  if (await page.getByRole('radio', { name: /Soundprint Session/ }).getAttribute('aria-checked') !== 'true') throw new Error('Service radiogroup must support arrow keys.');
   await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Studio', exact: true }).click();
   await assertHome(page);
   await waitForVisualRest(page);

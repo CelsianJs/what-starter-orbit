@@ -1,6 +1,6 @@
 import { demoDates, displayDate, displayTime, timezoneLabel } from '../data/studio.js';
 import { ServicePicker } from '../components/ServiceCard.jsx';
-import { availability, bookFromAvailability, checkAvailability, guestName, selectedDate, selectedServiceDetails, selectedStart, slotsForDate, status } from '../state/booking.js';
+import { availability, bookFromAvailability, canBook, checkAvailability, guestName, pending, selectedDate, selectedServiceDetails, selectedStart, slotsForDate, status } from '../state/booking.js';
 
 export default function Book() {
   return (
@@ -19,15 +19,15 @@ export default function Book() {
           <label><span>Your name</span><input value={guestName()} onInput={(event) => guestName(event.target.value)} /></label>
           <div class="field-group">
             <p class="group-label">Date</p>
-            <div class="date-tabs" role="tablist" aria-label="Date">
-              {demoDates.map((date) => <button class={selectedDate() === date ? 'active' : ''} onClick={() => { selectedDate(date); selectedStart(slotsForDate()[0] || selectedStart()); }}>{displayDate(date)}</button>)}
+            <div class="date-tabs" role="group" aria-label="Date">
+              {demoDates.map((date) => <button class={selectedDate() === date ? 'active' : ''} aria-pressed={() => selectedDate() === date} onClick={() => { selectedDate(date); selectedStart(slotsForDate()[0] || selectedStart()); }}>{displayDate(date)}</button>)}
             </div>
           </div>
           <div class="field-group">
             <p class="group-label">Time</p>
             <div class="slot-grid" aria-label={`Available slots in ${timezoneLabel}`}>
               {slotsForDate().map((slot) => (
-                <button class={selectedStart() === slot ? 'active' : ''} onClick={() => selectedStart(slot)}>
+                <button class={selectedStart() === slot ? 'active' : ''} aria-pressed={() => selectedStart() === slot} onClick={() => selectedStart(slot)}>
                   {displayTime(slot)} <span>{timezoneLabel}</span>
                 </button>
               ))}
@@ -40,8 +40,8 @@ export default function Book() {
           <p>{selectedServiceDetails().duration} minutes at {displayTime(selectedStart())} {timezoneLabel}</p>
           <p>{status()}</p>
           {availability()?.holdId ? <strong>{availability().holdId}</strong> : null}
-          <button class="button" onClick={() => checkAvailability()}>Check availability</button>
-          <button class="button ghost" onClick={bookFromAvailability}>Book locally</button>
+          <button class="button" disabled={() => pending()} onClick={() => checkAvailability()}>{() => pending() ? 'Checking studio calendar...' : 'Check availability'}</button>
+          <button class="button ghost" disabled={() => !canBook()} onClick={bookFromAvailability}>Book locally</button>
         </aside>
       </div>
     </section>
