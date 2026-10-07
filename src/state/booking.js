@@ -1,4 +1,4 @@
-import { computed, effect, signal } from 'what-framework';
+import { computed, effect, signal, untrack } from 'what-framework';
 import { baseSlots, displayDate, findService, services, slotDate, timezoneLabel } from '../data/studio.js';
 
 export const STORAGE_KEY = 'what-starter-orbit-v1';
@@ -27,34 +27,62 @@ export const selectedStart = signal('2026-10-06T14:00:00-04:00', 'orbit.start');
 export const guestName = signal('Mina Rivers', 'orbit.guestName');
 export const reservations = signal(memory.value.reservations, 'orbit.reservations');
 export const availability = signal(null, 'orbit.availability');
+export const pending = signal(false, 'orbit.pending');
+const verifiedDraft = signal(null);
 export const status = signal(`Times shown in ${timezoneLabel}.`, 'orbit.status');
 export const storageNotice = signal('Reservations are saved locally in this browser.', 'orbit.storage');
 
 export const slotsForDate = computed(() => baseSlots.filter((slot) => slotDate(slot) === selectedDate()));
 export const activeReservations = computed(() => reservations().filter((reservation) => reservation.status !== 'cancelled'));
 export const selectedServiceDetails = computed(() => findService(selectedService()));
+const draftKey = computed(() => JSON.stringify({ serviceId: selectedService(), date: selectedDate(), start: selectedStart(), reservations: reservations() }));
+export const canBook = computed(() => !pending() && availability()?.ok === true && verifiedDraft() === draftKey());
+
+effect(() => {
+  draftKey();
+  const hadHold = untrack(() => availability() !== null);
+  availability(null);
+  verifiedDraft(null);
+  if (hadHold) status('Draft changed. Check availability for this selection.');
+});
 
 export async function checkAvailability(fetcher = fetch) {
+  if (pending()) return null;
+  const key = draftKey();
+  const draft = { serviceId: selectedService(), start: selectedStart(), reservations: reservations() };
+  pending(true);
+  availability(null);
+  verifiedDraft(null);
   status('Checking studio calendar...');
   try {
     const response = await fetcher('/api/availability', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ serviceId: selectedService(), start: selectedStart(), reservations: reservations() }),
+      body: JSON.stringify(draft),
     });
     const body = await response.json();
+    if (key !== draftKey()) {
+      status('Draft changed during the check. Check this selection again.');
+      return null;
+    }
+    if (body.ok && (body.service?.id !== draft.serviceId || body.start !== draft.start)) throw new Error('Mismatched hold');
     availability(body);
+    verifiedDraft(body.ok ? key : null);
     status(body.ok ? `Studio hold ${body.holdId} is available.` : body.errors.join(' '));
     return body;
   } catch {
+    availability(null);
+    verifiedDraft(null);
     status('Availability service is unreachable. Draft selections are preserved.');
     return null;
+  } finally {
+    pending(false);
   }
 }
 
 export function bookFromAvailability() {
   const hold = availability();
-  if (!hold?.ok) {
+  if (!canBook()) {
     status('Check availability before booking.');
     return null;
   }

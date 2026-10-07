@@ -69,6 +69,15 @@ Regression tests added:
 
 Visual QA note: an earlier smoke captured after a subflow and could miss a blank home body. The later dim/ghost class of screenshot was treated as a timing risk: Cartograph diagnostics showed one header/brand, at-rest body/main opacity `1`, filter `none`, and finite `.page-enter` plus View Transition animations still running during the bad capture. Orbit also has decorative infinite orbit animations, so the current smoke waits for finite animations only, ignores decorative infinite loops, asserts meaningful root content before any subroute, and writes full-page home screenshots, so a nav-only or mid-transition render fails.
 
+## Verified draft and local ledger repair
+
+Regression-first tests reproduced checking Tuesday then selecting Thursday while still booking Tuesday's hold. `draftKey` fingerprints service, date, start and local reservations; selection changes invalidate availability, a response only applies to its captured key, and `canBook` requires a matching successful check with no request pending. Service cards select then navigate to Book. Date and time buttons expose pressed state as native controls rather than incomplete tab semantics.
+
+The ledger now uses a reactive total-record condition, retains cancelled history across reload, removes cancelled-row actions and shows active/cancelled counts. Reset all returns to the empty state without remount. Compact scoped hero sizing and mobile wordmark/count placement preserve the coral/navy orbital identity.
+
+Smooth path: keep selection reads in accessors, bind a hold to its submitted draft, test a delayed response and change-after-check, then add durable calendars separately. Local rescheduling remains a disclosed browser edit and still needs a server-confirmed production implementation. Smoke also exercises choose-to-book, cancel/reload/reset and ICS download.
+
+
 ## Known limitations
 
 - Reservations are private to the current browser.

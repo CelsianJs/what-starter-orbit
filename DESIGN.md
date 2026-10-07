@@ -2,7 +2,7 @@
 
 ## Source of truth
 - Status: Active
-- Last refreshed: 2026-10-02
+- Last refreshed: 2026-10-07
 - Primary product surfaces: Studio landing page, service menu, booking flow, private local reservations, build guide, serverless availability API.
 - Evidence reviewed: `what-starter-gather`, `what-starter-tempo`, `what-starter-cartograph`, What router/core package docs.
 
@@ -76,6 +76,13 @@
 - Performance constraints: Small bundle, bounded API body reader, generated aliases.
 - Compatibility constraints: Node 22 and npm ci.
 - Test/screenshot expectations: Vitest API/domain tests plus Playwright browser smoke desktop/mobile. Booking controls must show visible Service, Date, and Time labels; mobile keeps the local-count chip beside the wordmark; empty home state shows the next open slot instead of a giant zero.
+
+## Verified draft and ledger continuity
+- A verified hold belongs to the selected service/date/start and local reservations snapshot. Draft changes invalidate it; stale responses do not enable booking. Pending checks disable repeats and booking.
+- Choosing a service routes to Book with that service selected. Date/time use native pressed buttons; no incomplete tab keyboard contract is implied.
+- The service radiogroup uses one tab stop with arrow/Home/End selection and focus movement.
+- Cancelled records remain visible after reload, without move/cancel/export actions. Reset all reactively restores the empty ledger.
+- Compact hero type and mobile wordmark/count row retain the coral/navy orbital identity while shortening the path to service/slot choices.
 
 ## Open questions
 - [ ] Which durable calendar backend should production docs recommend first / owner: platform team / impact: future integration guide.
