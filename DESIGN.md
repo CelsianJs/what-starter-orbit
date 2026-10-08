@@ -2,7 +2,7 @@
 
 ## Source of truth
 - Status: Active
-- Last refreshed: 2026-10-07
+- Last refreshed: 2026-10-08
 - Primary product surfaces: Studio landing page, service menu, booking flow, private local reservations, build guide, serverless availability API.
 - Evidence reviewed: `what-starter-gather`, `what-starter-tempo`, `what-starter-cartograph`, What router/core package docs.
 
@@ -32,12 +32,12 @@
 - Tradeoffs: Uses deterministic demo dates so screenshots and tests are stable.
 
 ## Visual language
-- Color: Deep navy, coral, peach, cream, aqua highlights.
-- Typography: Georgia display copy with compact sans-serif controls.
-- Spacing/layout rhythm: Orbital rings, rounded cards, ledger rows.
-- Shape/radius/elevation: Large pill forms, circular motifs, soft glows.
-- Motion: Subtle orbit pulse and route entry, disabled for reduced motion.
-- Imagery/iconography: CSS/SVG orbit marks; no external assets.
+- Color: retain deep navy (`#07172f`), flat navy panels (`#0d2447`), coral actions, peach/cream text and aqua focus accents.
+- Typography: shared local Avenir Next / Segoe UI Variable / Segoe UI sans-serif stack; body 16px/1.6, labels and controls 14px, headings 28–36px/1.2, section headings 24px/1.3, brand 24px.
+- Spacing/layout rhythm: 8px rhythm, compact scheduling summary, readable service cards and ledger rows; service/date/time labels begin within the mobile booking viewport.
+- Shape/radius/elevation: 8px corners and subtle 1px borders. No uppercase pill controls, gradients, glows or decorative orbital background rings.
+- Motion: short route entrance; reduced-motion disables it.
+- Imagery/iconography: retain the existing small code-native service circle marks; no external assets.
 
 ## Components
 - Existing components to reuse: None directly; copy framework/Vura patterns only.
