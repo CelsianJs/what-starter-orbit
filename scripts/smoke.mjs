@@ -80,6 +80,22 @@ async function assertNoOverflow(page) {
   const viewportWidth = page.viewportSize().width;
   const widths = await page.evaluate(() => [document.documentElement.scrollWidth, document.body.scrollWidth]);
   if (widths.some((width) => width > viewportWidth)) throw new Error(`Horizontal overflow on ${page.url()}: ${widths} / ${viewportWidth}`);
+  const typography = await page.evaluate(() => {
+    const navRows = new Map();
+    for (const link of document.querySelectorAll('nav a')) {
+      const top = Math.round(link.getBoundingClientRect().top);
+      navRows.set(top, (navRows.get(top) || 0) + 1);
+    }
+    return {
+      navRows: [...navRows.values()],
+      family: getComputedStyle(document.body).fontFamily,
+      body: getComputedStyle(document.body).fontSize,
+      heading: parseFloat(getComputedStyle(document.querySelector('h1')).fontSize),
+      smallTargets: [...document.querySelectorAll('nav a, button, .button, a.brand')].filter(node => node.getClientRects().length && node.getBoundingClientRect().height < 43.9).map(node => node.textContent),
+    };
+  });
+  if (!typography.family.includes('Avenir Next') || typography.body !== '16px' || typography.heading < 28 || typography.heading > 36 || typography.smallTargets.length) throw new Error(`Modern typography/control geometry drift: ${JSON.stringify(typography)}`);
+  if (viewportWidth === 390 && JSON.stringify(typography.navRows) !== '[3,2]') throw new Error(`Mobile navigation should form balanced 3+2 rows: ${JSON.stringify(typography.navRows)}`);
 }
 async function runFlow(name, options) {
   const context = await browser.newContext(options);

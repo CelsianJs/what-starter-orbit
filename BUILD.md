@@ -91,3 +91,9 @@ Smooth path: keep selection reads in accessors, bind a hold to its submitted dra
 - Add idempotent server holds with expiration before confirming shared slots.
 - Revalidate every reschedule on the server.
 - Send server-owned ICS/email/SMS only after durable confirmation.
+
+## Compact application styling
+
+Keep typography and control geometry consistent across home, detail, forms, and build routes. The local sans-serif stack uses 16px body copy, 14px labels and controls, bounded 28–36px primary headings, 24px section headings, and 44px interactive targets. The same subtle borders, 8px corners, and focus treatment apply to selected, revealed, and disabled states.
+
+Flatten decorative backgrounds before adding another override. Consolidate the existing selectors so desktop and mobile share one component system; preserve domain state, route IDs, native controls, and code examples. On small screens, put the next useful task before secondary previews. Test the real workflow after a style change, including persisted/denied-storage state and narrow code blocks.
